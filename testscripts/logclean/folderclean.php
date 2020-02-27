@@ -1,8 +1,8 @@
 <?php
-$flag = 0;
+$flag = 1;
 // ignore_user_abort();
-set_time_limit(0);
-$interval = 3000;
+// set_time_limit(0);
+$interval = 300;
 do {
   $flagfile = "cleanflag.txt";
   if (file_exists($flagfile) && is_readable($flagfile)) {
@@ -12,7 +12,7 @@ do {
     }
     fclose($fh);
   }
-  $dir = "./testlog";
+  $dir = "../../testlog";
   $handle = opendir("{$dir}/");
   while (false !== ($file = readdir($handle))) {
     if ($file != "." && $file != ".." && !is_dir("{$dir}/{$file}")) {

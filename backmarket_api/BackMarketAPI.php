@@ -2,7 +2,6 @@
 
 include_once ('Config.php');
 
-
 /**
  * CLASS BackMarketAPI
  * Contain all the variables and methods to communicate with Back Market
@@ -12,25 +11,22 @@ include_once ('Config.php');
  */
 class BackMarketAPI {
 
-  function __constructor(){
-    $config = new Config();
-  }
-
   // US base - change .fr to .com
   // Test environment - change www to preprod
   protected static $base_url = 'https://www.backmarket.com/ws/';
   protected static $COUNTRY_CODE = 'en-us';
-  protected static $YOUR_ACCESS_TOKEN = $this->getToken();
-  protected static $YOUR_USER_AGENT = $config->getUserAgent();
+  protected static $YOUR_ACCESS_TOKEN;
+  protected static $YOUR_USER_AGENT;
 
-  public function test() {
-    echo $this::$YOUR_ACCESS_TOKEN;
-    echo $this::$YOUR_USER_AGENT;
-  }
-
-  public function getToken() {
-    $config = new Config();
-    return $config->getToken();
+  /**
+   * CONSTRUCTOR __construct
+   * Initialize the variables in another class containing token information
+   * @author Guozhi Tang
+   * @since 2020-02-27
+   */
+  function __construct() {
+    self::$YOUR_ACCESS_TOKEN = Config::getToken();
+    self::$YOUR_USER_AGENT = Config::getUserAgent();
   }
 
   /**
@@ -51,16 +47,16 @@ class BackMarketAPI {
     // The parameters in HTTP Header
     $api_call_data['Content-Type'] = 'application/json';
     $api_call_data['Accept'] = 'application/json';
-    $api_call_data['Accept-Language'] = $this::$COUNTRY_CODE;
-    $api_call_data['Authorization'] = 'Basic '.$this::$YOUR_ACCESS_TOKEN;
-    $api_call_data['User-Agent'] = $this::$YOUR_USER_AGENT;
+    $api_call_data['Accept-Language'] = self::$COUNTRY_CODE;
+    $api_call_data['Authorization'] = 'Basic '.self::$YOUR_ACCESS_TOKEN;
+    $api_call_data['User-Agent'] = self::$YOUR_USER_AGENT;
 
     $headers = array();
     foreach($api_call_data as $key => $value) {
       array_push($headers, "$key:$value");
     }
 
-    $target_url = $this::$base_url.$end_point;
+    $target_url = self::$base_url.$end_point;
 
     // Send the GET request
     $ch = curl_init();
@@ -98,16 +94,16 @@ class BackMarketAPI {
     // The parameters in HTTP Header
     $api_call_data['Content-Type'] = $content_type;
     $api_call_data['Accept'] = $content_type;
-    $api_call_data['Accept-Language'] = $this::$COUNTRY_CODE;
-    $api_call_data['Authorization'] = 'Basic '.$this::$YOUR_ACCESS_TOKEN;
-    $api_call_data['User-Agent'] = $this::$YOUR_USER_AGENT;
+    $api_call_data['Accept-Language'] = self::$COUNTRY_CODE;
+    $api_call_data['Authorization'] = 'Basic '.self::$YOUR_ACCESS_TOKEN;
+    $api_call_data['User-Agent'] = self::$YOUR_USER_AGENT;
 
     $headers = array();
     foreach($api_call_data as $key => $value) {
       array_push($headers, "$key:$value");
     }
 
-    $target_url = $this::$base_url.$end_point;
+    $target_url = self::$base_url.$end_point;
 
     // Send the POST request
     $ch = curl_init();
@@ -136,7 +132,7 @@ class BackMarketAPI {
   }
 
   /**
-   * METHOD get_all_orders
+   * METHOD getAllOrders()
    * Get data of all orders based on exact date and limitations, defalutly grab the data in 60 days.
    * @param date $date_creation - get the orders from this timestamp till now
    * @param array $param - contain all of other filter parameters
@@ -160,7 +156,7 @@ class BackMarketAPI {
     }
 
     // result of the first page
-    $result = $this->api_get($end_point);
+    $result = $this->apiGet($end_point);
     // print_r($result);
 
     // array results of the first page
@@ -177,7 +173,7 @@ class BackMarketAPI {
       $end_point_next = $end_point.$end_point_next_tail;
       // print_r($end_point_next);
       // the new page object
-      $result_next = $this->api_get($end_point_next);
+      $result_next = $this->apiGet($end_point_next);
       // the new page array
       $result_next_array = $result_next->results;
       // add all orders in current page to the $result_array
@@ -191,7 +187,7 @@ class BackMarketAPI {
   }
 
   /**
-   * METHOD get_one_order
+   * METHOD getOneOrder()
    * Get one order's data according to a specific $order_id
    * @param int $order_id - the order_id of the order you want
    * @return void
@@ -199,14 +195,14 @@ class BackMarketAPI {
    * @author Guozhi Tang
    * @since 2020-02-25
    */
-  function get_one_order($order_id) {
+  function getOneOrder($order_id) {
     $end_point = 'orders/'.$order_id;
-    $result = $this->api_get($end_point);
+    $result = $this->apiGet($end_point);
     return $result;
   }
 
   /**
-   * METHOD get_new_orders
+   * METHOD getNewOrders()
    * Get data of new orders whose states are 0 or 1.
    * @param array $param - some filter parameters
    * @return void
@@ -214,7 +210,7 @@ class BackMarketAPI {
    * @author Guozhi Tang
    * @since 2020-02-26
    */
-  function get_new_orders($param = array()) {
+  function getNewOrders($param = array()) {
     $end_point_0 = 'orders?state=9';
     $end_point_1 = 'orders?state=1';
 
@@ -224,8 +220,8 @@ class BackMarketAPI {
     }
 
     // result of the first page
-    $result0 = $this->api_get($end_point_0);
-    $result1 = $this->api_get($end_point_1);
+    $result0 = $this->apiGet($end_point_0);
+    $result1 = $this->apiGet($end_point_1);
     // print_r($result0);
     // print_r($result1);
 
@@ -246,7 +242,7 @@ class BackMarketAPI {
       $end_point_next0 = $end_point_0.$end_point_next0_tail;
       // print_r($end_point_next0);
       // the new page object
-      $result0_next = $this->api_get($end_point_next0);
+      $result0_next = $this->apiGet($end_point_next0);
       // the new page array
       $result_next0_array = $result0_next->results;
       // add all orders in current page to the $res0_array
@@ -264,7 +260,7 @@ class BackMarketAPI {
       $end_point_next1_tail = '&page='."$page1";
       $end_point_next1 = $end_point_1.$end_point_next1_tail;
       // the new page object
-      $result1_next = $this->api_get($end_point_next1);
+      $result1_next = $this->apiGet($end_point_next1);
       // the new page array
       $result_next1_array = $result1_next->results;
       // add all orders in current page to the $res1_array
@@ -285,7 +281,7 @@ class BackMarketAPI {
   }
 
   /**
-   * METHOD validate_orderlines
+   * METHOD validateOrderlines
    * Update the status of orderlines when status is 1: 1 -> 2 or 1 -> 4
    * @param int $order_id - order id of the order
    * @param string $sku - sku of the listing
@@ -295,7 +291,7 @@ class BackMarketAPI {
    * @author Guozhi Tang
    * @since 2020-02-26
    */
-  function validate_orderlines($order_id, $sku, $validated = true) {
+  function validateOrderlines($order_id, $sku, $validated = true) {
     // judge whether this order is validated or cancelled
     if ($validated) {
       $new_state = 2;
@@ -308,12 +304,12 @@ class BackMarketAPI {
 
     $end_point = 'orders/'.$order_id;
 
-    $result = $this->api_post($end_point, $request_JSON);
+    $result = $this->apiPost($end_point, $request_JSON);
 
     return $result;
   }
 
-  function shipping_orderlines($shipping = true, $order_id, $tracking_num, $tracking_url, $date_shipping, $shipper, $sku = null) {
+  function shippingOrderlines($shipping = true, $order_id, $tracking_num, $tracking_url, $date_shipping, $shipper, $sku = null) {
     // judge whether this order is in shipping process or cancelled
     if ($shipping) {
       $new_state = 3;

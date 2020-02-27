@@ -6,42 +6,41 @@ include_once ('../backmarket_api/Config.php');
 
 $bm = new BackMarketAPI();
 /**
- * Get orders directly through api_get() method.
+ * Get orders directly through apiGet() method.
  */
 // echo $bm->apiGet('orders');
 
 /**
- * Get listings directly through api_get() method
+ * Get listings directly through apiGet()cd method
  */
-// echo $bm->api_get('listings');
+// echo $bm->apiGet('listings');
 
 /**
- * Edit specific listing directly through api_post()
+ * Edit specific listing directly through apiPost()
  */
 /*
 $request = array ('quantity' => 15, 'price' => 499.99);
 $request_JSON = json_encode($request);
-echo $bm->api_post('listings/67026', $request_JSON);
+echo $bm->apiPost('listings/67026', $request_JSON);
 */
 
 /**
- * Get orders through get_all_orders() method
+ * Get orders through getAllOrders() method
  */
 // $date_creation = date("Y-m-d+H:i:s", time() - 90 * 60 * 60 * 24);
 // $state = 9;
-// echo $bm->get_all_orders();
+echo $bm->getAllOrders();
 
 /**
- * Get one specific order information through get_one_order() method
+ * Get one specific order information through getOneOrder() method
  */
 /*
 $order_id = 209810;
-echo $bm->get_one_order($order_id);
+echo $bm->getOneOrder($order_id);
 */
 
 /**
- * Get new orders through get_new_orders() method
+ * Get new orders through getNewOrders() method
  */
-// echo $bm->get_new_orders();
-echo $bm->test();
+// echo $bm->getNewOrders();
 ?>
