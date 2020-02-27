@@ -3,10 +3,10 @@
 include_once ('../backmarket_api/BackMarketAPI.php');
 
 
-getBMOrderAll();
-// getBMOrderNew();
+getBMOrdersAll();
+// getBMOrdersNew();
 
-function getBMOrderAll() {
+function getBMOrdersAll() {
 
   $bm = new BackMarketAPI();
   $res_array = $bm->getAllOrders();
@@ -20,7 +20,7 @@ function getBMOrderAll() {
   // @TODO update the data in $result to the database
 }
 
-function getBMOrderNew() {
+function getBMOrdersNew() {
   $bm = new BackMarketAPI();
 
   $res_array = $bm->getNewOrders();

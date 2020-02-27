@@ -283,6 +283,8 @@ class BackMarketAPI {
   /**
    * METHOD validateOrderlines
    * Update the state of orderlines when state is 1: 1 -> 2 or 1 -> 4
+   * State 1 -> 2 means that 'Orderline' is accepted by the merchant, who must now prepare the 'Product' for shipment.
+   * State 1 -> 4 means that 'Orderline' is cancelled. The customer will be refunded for the 'Orderline'.
    * @param string $order_id - specific order id
    * @param string $sku - specific sku of the listing
    * @param boolean $validated - whether it should be validated or cancelled
@@ -309,7 +311,9 @@ class BackMarketAPI {
 
   /**
    * METHOD shippingOrderlines
-   * Updaet the state of orderlines when state is 2: 2 -> 3 or 2 -> 5
+   * Update the state of orderlines when state is 2: 2 -> 3 or 2 -> 5
+   * State 2 -> 3 means that the merchant has deliver the 'Orderline' to the shipping company. The package delivery is in progress.
+   * State 2 -> 5 means that Orderline is refunded before shipping
    * @param boolean $shipping
    * @param string $order_id - speicific order id
    * @param string $tracking_num - specific tracking number
@@ -318,6 +322,7 @@ class BackMarketAPI {
    * @param string $shipper - the company or person who handles this order
    * @param string $sku - specific sku of the listing
    * @return void
+   * @link POST https://www.backmarket.com/ws/$end_point
    * @author Guozhi Tang
    * @since 2020-02-27
    */
@@ -345,13 +350,40 @@ class BackMarketAPI {
     return $result;
   }
 
-  function create_items() {}
+  /**
+   * METHOD refundAfterShipping
+   * Update the state of orderlines when state is 3: 3 -> 6
+   * State 3 -> 6 means that orderline is refunded after shipping. The customer made a refund request.
+   * @param string $order_id - speicific order id
+   * @param string $sku - specific sku of the listing
+   * @param int $return_reason - status code of the return reason: 
+   *            0: Stock mistake.
+   *            1: Withdrawal during the legal 14 day period.
+   *            11: Does not live at provided address.
+   *            12: The parcel did not reach its destination.
+   *            13: Lost parcel.
+   *            21: Faulty product on opening of the package.
+   *            22: Failure during first use.
+   *            23: Failure during warranty period.
+   *            24: Non-compliant product.
+   *            25: Other.
+   * @param string $return_message - message sent to the customer for a cancellation or a refund
+   * @return void
+   * @link POST https://www.backmarket.com/ws/$end_point
+   * @author Guozhi Tang
+   * @since 2020-02-27
+   */
+  function refundAfterShipping($order_id, $sku, $return_reason, $return_message = null) {
+    $new_state = 6;
+    // construct the request body when state == 6
+    $request = array('order_id' => $order_id, 'new_state' => $new_state, 'sku' => $sku, 'return_reason' => $return_reason);
+    if ($return_message != null) $request['return_message'] = $return_message;
 
-  // inventory, price
-  function xxx_update() {}
+    $request_JSON = json_encode($request);
 
-  // acknowledge, cancel, refund, shipping
-  function xxx_orders() {}
+    $result = $this->apiPost($end_point, $request_JSON);
 
+    return $result;
+  }
 }
 ?>
