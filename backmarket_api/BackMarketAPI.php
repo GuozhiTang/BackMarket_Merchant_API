@@ -132,9 +132,9 @@ class BackMarketAPI {
   }
 
   /**
-   * METHOD getAllOrders()
+   * METHOD getAllOrders
    * Get data of all orders based on exact date and limitations, defalutly grab the data in 60 days.
-   * @param date $date_creation - get the orders from this timestamp till now
+   * @param string $date_creation - get the orders from this timestamp till now
    * @param array $param - contain all of other filter parameters
    * @return void
    * @link GET https://www.backmarket.com/ws/$end_point
@@ -187,9 +187,9 @@ class BackMarketAPI {
   }
 
   /**
-   * METHOD getOneOrder()
+   * METHOD getOneOrder
    * Get one order's data according to a specific $order_id
-   * @param int $order_id - the order_id of the order you want
+   * @param string $order_id - specific order id
    * @return void
    * @link GET https://www.backmarket.com/ws/$end_point
    * @author Guozhi Tang
@@ -202,7 +202,7 @@ class BackMarketAPI {
   }
 
   /**
-   * METHOD getNewOrders()
+   * METHOD getNewOrders
    * Get data of new orders whose states are 0 or 1.
    * @param array $param - some filter parameters
    * @return void
@@ -282,9 +282,9 @@ class BackMarketAPI {
 
   /**
    * METHOD validateOrderlines
-   * Update the status of orderlines when status is 1: 1 -> 2 or 1 -> 4
-   * @param int $order_id - order id of the order
-   * @param string $sku - sku of the listing
+   * Update the state of orderlines when state is 1: 1 -> 2 or 1 -> 4
+   * @param string $order_id - specific order id
+   * @param string $sku - specific sku of the listing
    * @param boolean $validated - whether it should be validated or cancelled
    * @return void
    * @link POST https://www.backmarket.com/ws/$end_point
@@ -292,23 +292,35 @@ class BackMarketAPI {
    * @since 2020-02-26
    */
   function validateOrderlines($order_id, $sku, $validated = true) {
-    // judge whether this order is validated or cancelled
-    if ($validated) {
-      $new_state = 2;
-      // construct the request body when state == 2
-    }
-    else $new_state = 4;
-
-    $request = array(order_id=>$order_id, new_state=>$new_state, sku=>$sku);
-    $request_JSON = json_encode($request);
 
     $end_point = 'orders/'.$order_id;
+    // judge whether this order is validated or cancelled
+    if ($validated) $new_state = 2;
+    else $new_state = 4;
+
+    // construct the request body
+    $request = array('order_id' => $order_id, 'new_state' => $new_state, 'sku' => $sku);
+    $request_JSON = json_encode($request);
 
     $result = $this->apiPost($end_point, $request_JSON);
 
     return $result;
   }
 
+  /**
+   * METHOD shippingOrderlines
+   * Updaet the state of orderlines when state is 2: 2 -> 3 or 2 -> 5
+   * @param boolean $shipping
+   * @param string $order_id - speicific order id
+   * @param string $tracking_num - specific tracking number
+   * @param string $tracking_url - the corresponding url for the tracking
+   * @param string $date_shipping - the timestamp for the shipping date and time
+   * @param string $shipper - the company or person who handles this order
+   * @param string $sku - specific sku of the listing
+   * @return void
+   * @author Guozhi Tang
+   * @since 2020-02-27
+   */
   function shippingOrderlines($shipping = true, $order_id, $tracking_num, $tracking_url, $date_shipping, $shipper, $sku = null) {
     // judge whether this order is in shipping process or cancelled
     if ($shipping) {
@@ -318,11 +330,19 @@ class BackMarketAPI {
       if ($tracking_url != null) $request_shipping['tracking_url'] = $tracking_url;
       if ($date_shipping != null) $request_shipping['date_shipping'] = $date_shipping;
       if ($shipper != null) $request_shipping['shipper'] = $shipper;
-    }
-    else $new_state = 5;
 
+      $request_JSON = json_encode($request_shipping);
+    } else {
+      $new_state = 5;
+      // construct the request body when state == 5
+      $request_cancelled = array('order_id' => $order_id, 'new_state' => $new_state, 'sku' => $sku);
+      
+      $request_JSON = json_encode($request_cancelled);
+    } 
 
-    $request_cancelled = array(order_id=>$order_id, new_state=>$new_state, sku=>$sku);
+    $result = $this->apiPost($end_point, $request_JSON);
+
+    return $result;
   }
 
   function create_items() {}
