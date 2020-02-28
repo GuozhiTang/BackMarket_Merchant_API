@@ -1,6 +1,6 @@
 <?php
 
-include_once ('Config.php');
+include_once ('../config/Access.php');
 
 /**
  * CLASS BackMarketAPI
@@ -25,8 +25,8 @@ class BackMarketAPI {
    * @since 2020-02-27
    */
   function __construct() {
-    self::$YOUR_ACCESS_TOKEN = Config::getToken();
-    self::$YOUR_USER_AGENT = Config::getUserAgent();
+    self::$YOUR_ACCESS_TOKEN = Access::getToken();
+    self::$YOUR_USER_AGENT = Access::getUserAgent();
   }
 
   /**
@@ -134,6 +134,7 @@ class BackMarketAPI {
   /**
    * METHOD getAllOrders
    * Get data of all orders based on exact date and limitations, defalutly grab the data in 60 days.
+   * @param string $date_modification - get the modificated orders from this timestamp till now
    * @param string $date_creation - get the orders from this timestamp till now
    * @param array $param - contain all of other filter parameters
    * @return void
@@ -141,15 +142,21 @@ class BackMarketAPI {
    * @author Guozhi Tang
    * @since 2020-02-25
    */
-  function getAllOrders($date_creation = false, $param = array()) {
+  function getAllOrders($date_modification = false, $date_creation = false, $param = array()) {
     $end_point = 'orders';
 
     // if there is no date_creation, default could be one day.
-    if (!$date_creation) {
-      $date_creation = date("Y-m-d+H:i:s", time() - 60 * 24 * 60 * 60);
-    }
+    // if (!$date_creation) {
+    //   $date_creation = date("Y-m-d+H:i:s", time() - 60 * 24 * 60 * 60);
+    //   $end_point .= "?date_creation=$date_creation";
+    // }
 
-    $end_point .= "?date_creation=$date_creation";
+    if (!$date_modification) {
+      // comment this line if it is needed to get all the orders without time limitation
+      $date_modification = date("Y-m-d+H:i:s", time() - 60 * 24 * 60 * 60);
+    }
+    
+    $end_point .= "?date_modification=$date_modification";
 
     if(count($param) > 0) {
       $end_point .= '&'.http_build_query($param);
@@ -211,7 +218,7 @@ class BackMarketAPI {
    * @since 2020-02-26
    */
   function getNewOrders($param = array()) {
-    $end_point_0 = 'orders?state=9';
+    $end_point_0 = 'orders?state=0';
     $end_point_1 = 'orders?state=1';
 
     if (count($param) > 0) {

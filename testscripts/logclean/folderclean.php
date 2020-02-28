@@ -2,7 +2,7 @@
 $flag = 1;
 // ignore_user_abort();
 // set_time_limit(0);
-$interval = 300;
+$interval = 600;
 do {
   $flagfile = "cleanflag.txt";
   if (file_exists($flagfile) && is_readable($flagfile)) {

@@ -29,7 +29,7 @@ echo $bm->apiPost('listings/67026', $request_JSON);
  */
 // $date_creation = date("Y-m-d+H:i:s", time() - 90 * 60 * 60 * 24);
 // $state = 9;
-echo $bm->getAllOrders();
+// echo $bm->getAllOrders();
 
 /**
  * Get one specific order information through getOneOrder() method
@@ -43,4 +43,6 @@ echo $bm->getOneOrder($order_id);
  * Get new orders through getNewOrders() method
  */
 // echo $bm->getNewOrders();
+
+$bm->validateOrderlines('324272', '889842392111_bkmt');
 ?>
