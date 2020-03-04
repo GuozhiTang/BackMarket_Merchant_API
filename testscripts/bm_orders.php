@@ -5,8 +5,8 @@ include_once ('../config/database_tables.php');
 include_once ('../config/conn.php');
 
 
-// updateBMOrdersAll();
-getBMOrdersNew();
+updateBMOrdersAll();
+// getBMOrdersNew();
 
 /**
  * METHOD getBMOrdersNew

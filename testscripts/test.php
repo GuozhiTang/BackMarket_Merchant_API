@@ -44,5 +44,6 @@ echo $bm->getOneOrder($order_id);
  */
 // echo $bm->getNewOrders();
 
-$bm->validateOrderlines('324272', '889842392111_bkmt');
+// $bm->validateOrderlines('324272', '889842392111_bkmt');
+$bm->shippingOrderlines(true, '324272', '1Z85329E4231218965', 'UPS');
 ?>

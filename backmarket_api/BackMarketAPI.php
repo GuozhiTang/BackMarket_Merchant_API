@@ -333,7 +333,9 @@ class BackMarketAPI {
    * @author Guozhi Tang
    * @since 2020-02-27
    */
-  function shippingOrderlines($shipping = true, $order_id, $tracking_num, $tracking_url, $date_shipping, $shipper, $sku = null) {
+  function shippingOrderlines($shipping = true, $order_id, $tracking_num, $shipper, $date_shipping = null, $tracking_url = null, $sku = null) {
+    $end_point = 'orders/'.$order_id;
+
     // judge whether this order is in shipping process or cancelled
     if ($shipping) {
       $new_state = 3;
@@ -352,6 +354,8 @@ class BackMarketAPI {
       $request_JSON = json_encode($request_cancelled);
     } 
 
+    // echo $end_point."\n";
+    // echo $request_JSON;
     $result = $this->apiPost($end_point, $request_JSON);
 
     return $result;
@@ -381,6 +385,8 @@ class BackMarketAPI {
    * @since 2020-02-27
    */
   function refundAfterShipping($order_id, $sku, $return_reason, $return_message = null) {
+    $end_point = 'orders/'.$order_id;
+
     $new_state = 6;
     // construct the request body when state == 6
     $request = array('order_id' => $order_id, 'new_state' => $new_state, 'sku' => $sku, 'return_reason' => $return_reason);
