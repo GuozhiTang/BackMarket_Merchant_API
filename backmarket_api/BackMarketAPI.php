@@ -33,7 +33,7 @@ class BackMarketAPI {
    * METHOD api_get
    * Send GET request to Back Market with specific endpoint url
    * @param string $end_point - part of the endpoint url for this GET request
-   * @return void
+   * @return object - the HTTP response for HTTP GET reqeust as an object
    * @link GET https://www.backmarket.com/ws/$end_point
    * @author Guozhi Tang
    * @since 2020-02-25
@@ -80,7 +80,7 @@ class BackMarketAPI {
    * @param string $end_point - part of the endpoint url for this POST requet
    * @param string $request - the request body of this POST request
    * @param string $content_type - the content type in the Header of POST request
-   * @return void
+   * @return object - the HTTP response for HTTP POST requests as an object
    * @link POST https://www.backmarket.com/ws/$end_point
    * @author Guozhi Tang
    * @since 2020-02-25
@@ -127,8 +127,8 @@ class BackMarketAPI {
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    echo $post_result;
-    return $post_result;
+    // echo $post_result;
+    return json_decode($post_result);
   }
 
   /**
@@ -137,7 +137,7 @@ class BackMarketAPI {
    * @param string $date_modification - get the modificated orders from this timestamp till now
    * @param string $date_creation - get the orders from this timestamp till now
    * @param array $param - contain all of other filter parameters
-   * @return void
+   * @return array - the orders information in an array
    * @link GET https://www.backmarket.com/ws/$end_point
    * @author Guozhi Tang
    * @since 2020-02-25
@@ -197,7 +197,7 @@ class BackMarketAPI {
    * METHOD getOneOrder
    * Get one order's data according to a specific $order_id
    * @param string $order_id - specific order id
-   * @return void
+   * @return object - an order information as an object
    * @link GET https://www.backmarket.com/ws/$end_point
    * @author Guozhi Tang
    * @since 2020-02-25
@@ -212,7 +212,7 @@ class BackMarketAPI {
    * METHOD getNewOrders
    * Get data of new orders whose states are 0 or 1.
    * @param array $param - some filter parameters
-   * @return void
+   * @return array =  the new orders information in an array
    * @link GET https://www.backmarket.com/ws/$end_point
    * @author Guozhi Tang
    * @since 2020-02-26
@@ -289,13 +289,13 @@ class BackMarketAPI {
 
   /**
    * METHOD validateOrderlines
-   * Update the state of orderlines when state is 1: 1 -> 2 or 1 -> 4
+   * Update the state of orderlines when state is 1: 1 -> 2 (or 1 -> 4)
    * State 1 -> 2 means that 'Orderline' is accepted by the merchant, who must now prepare the 'Product' for shipment.
-   * State 1 -> 4 means that 'Orderline' is cancelled. The customer will be refunded for the 'Orderline'.
+   * (State 1 -> 4 means that 'Orderline' is cancelled. The customer will be refunded for the 'Orderline'.)
    * @param string $order_id - specific order id
    * @param string $sku - specific sku of the listing
    * @param boolean $validated - whether it should be validated or cancelled
-   * @return void
+   * @return object - the HTTP response of the POST request
    * @link POST https://www.backmarket.com/ws/$end_point
    * @author Guozhi Tang
    * @since 2020-02-26
@@ -304,8 +304,9 @@ class BackMarketAPI {
 
     $end_point = 'orders/'.$order_id;
     // judge whether this order is validated or cancelled
-    if ($validated) $new_state = 2;
-    else $new_state = 4;
+    // if ($validated) $new_state = 2;
+    // else $new_state = 4;
+    $new_state = 2;
 
     // construct the request body
     $request = array('order_id' => $order_id, 'new_state' => $new_state, 'sku' => $sku);
@@ -318,9 +319,9 @@ class BackMarketAPI {
 
   /**
    * METHOD shippingOrderlines
-   * Update the state of orderlines when state is 2: 2 -> 3 or 2 -> 5
+   * Update the state of orderlines when state is 2: 2 -> 3 (or 2 -> 5)
    * State 2 -> 3 means that the merchant has deliver the 'Orderline' to the shipping company. The package delivery is in progress.
-   * State 2 -> 5 means that Orderline is refunded before shipping
+   * (State 2 -> 5 means that Orderline is refunded before shipping)
    * @param boolean $shipping
    * @param string $order_id - speicific order id
    * @param string $tracking_num - specific tracking number
@@ -328,7 +329,7 @@ class BackMarketAPI {
    * @param string $date_shipping - the timestamp for the shipping date and time
    * @param string $shipper - the company or person who handles this order
    * @param string $sku - specific sku of the listing
-   * @return void
+   * @return object - the HTTP response of the POST request
    * @link POST https://www.backmarket.com/ws/$end_point
    * @author Guozhi Tang
    * @since 2020-02-27
@@ -337,22 +338,30 @@ class BackMarketAPI {
     $end_point = 'orders/'.$order_id;
 
     // judge whether this order is in shipping process or cancelled
-    if ($shipping) {
-      $new_state = 3;
-      // construct the request body when state == 3
-      $request_shipping = array('order_id' => $order_id, 'new_state' => $new_state, 'tracking_number' => $tracking_num);
-      if ($tracking_url != null) $request_shipping['tracking_url'] = $tracking_url;
-      if ($date_shipping != null) $request_shipping['date_shipping'] = $date_shipping;
-      if ($shipper != null) $request_shipping['shipper'] = $shipper;
+    // if ($shipping) {
+    //   $new_state = 3;
+    //   // construct the request body when state == 3
+    //   $request_shipping = array('order_id' => $order_id, 'new_state' => $new_state, 'tracking_number' => $tracking_num);
+    //   if ($tracking_url != null) $request_shipping['tracking_url'] = $tracking_url;
+    //   if ($date_shipping != null) $request_shipping['date_shipping'] = $date_shipping;
+    //   if ($shipper != null) $request_shipping['shipper'] = $shipper;
 
-      $request_JSON = json_encode($request_shipping);
-    } else {
-      $new_state = 5;
-      // construct the request body when state == 5
-      $request_cancelled = array('order_id' => $order_id, 'new_state' => $new_state, 'sku' => $sku);
+    //   $request_JSON = json_encode($request_shipping);
+    // } else {
+    //   $new_state = 5;
+    //   // construct the request body when state == 5
+    //   $request_cancelled = array('order_id' => $order_id, 'new_state' => $new_state, 'sku' => $sku);
       
-      $request_JSON = json_encode($request_cancelled);
-    } 
+    //   $request_JSON = json_encode($request_cancelled);
+    // } 
+    $new_state = 3;
+    // construct the request body when state == 3
+    $request_shipping = array('order_id' => $order_id, 'new_state' => $new_state, 'tracking_number' => $tracking_num);
+    if ($tracking_url != null) $request_shipping['tracking_url'] = $tracking_url;
+    if ($date_shipping != null) $request_shipping['date_shipping'] = $date_shipping;
+    if ($shipper != null) $request_shipping['shipper'] = $shipper;
+
+    $request_JSON = json_encode($request_shipping);
 
     // echo $end_point."\n";
     // echo $request_JSON;
@@ -379,7 +388,7 @@ class BackMarketAPI {
    *            24: Non-compliant product.
    *            25: Other.
    * @param string $return_message - message sent to the customer for a cancellation or a refund
-   * @return void
+   * @return object - the HTTP response of the POST request
    * @link POST https://www.backmarket.com/ws/$end_point
    * @author Guozhi Tang
    * @since 2020-02-27
@@ -395,6 +404,43 @@ class BackMarketAPI {
     $request_JSON = json_encode($request);
 
     $result = $this->apiPost($end_point, $request_JSON);
+
+    return $result;
+  }
+
+  /**
+   * METHOD refundOrCancellation
+   * Update the state of orderlines after refund or cancellation for state 1 and 2
+   * State 1 -> 4 means that 'Orderline' is cancelled. The customer will be refunded for the 'Orderline'.
+   * State 2 -> 5 means that Orderline is refunded before shipping
+   * @param string $order_id - speicific order id
+   * @param string $sku - specific sku of the listing
+   * @param boolean $trueForValidate - if this flag is true means that it is for validateion process and the new state is 4, else it is for shipping process, the new state is 5
+   * @return object - the HTTP response of the POST request
+   * @author Guozhi Tang
+   * @since 2020-03-04
+   */
+  function refundOrCancellation($order_id, $sku, $trueForValidate) {
+    $end_point = 'orders/'.$order_id;
+    
+    // during the validate process
+    if ($trueForValidate == true) {
+      $new_state = 4;
+      // construct the request body when state == 4
+      $request = array('order_id' => $order_id, 'new_state' => $new_state, 'sku' => $sku);
+      $request_JSON = json_encode($request);
+
+      $result = $this->apiPost($end_point, $request_JSON);
+    }
+    // before the shipping process
+    else {
+      $new_state = 5;
+      // construct the request body when state == 5
+      $request_cancelled = array('order_id' => $order_id, 'new_state' => $new_state, 'sku' => $sku);
+      $request_JSON = json_encode($request_cancelled);
+
+      $result = $this->apiPost($end_point, $request_JSON);
+    }
 
     return $result;
   }

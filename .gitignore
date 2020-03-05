@@ -5,6 +5,7 @@
 
 /testlog/
 /config/
+/js/
 
 # User-specific files
 *.rsuser

@@ -4,9 +4,9 @@ include_once ('../backmarket_api/BackMarketAPI.php');
 include_once ('../config/database_tables.php');
 include_once ('../config/conn.php');
 
-
-updateBMOrdersAll();
-// getBMOrdersNew();
+getBMOrdersNew();
+// sleep(10);
+// updateBMOrdersAll();
 
 /**
  * METHOD getBMOrdersNew
@@ -19,6 +19,8 @@ function getBMOrdersNew() {
   $bm = new BackMarketAPI();
 
   $res_array = $bm->getNewOrders();
+  // $res_array = $bm->getAllOrders();
+
   print_r($res_array);
 
   // if there are some new orders
@@ -133,6 +135,14 @@ function updateOrderInDB($order, $insert = false) {
   if ($order->installment_payment == '' || $order->installment_payment == false) $installPay = 0;
   else $installPay = 1;
 
+  /* ------------- get the title with the maximum price in all orderlines in this order ------------- */
+  $item_array = $order->orderlines;
+  $title = $item_array[0]->product;
+  for ($i = 1; $i < count($item_array); $i++) {
+    if (($item_array[$i]->price) >= ($item_array[$i-1]->price)) $title = ($item_array[$i]->product);
+    else $title = ($item_array[$i-1]->product); 
+  } 
+
   // if only need update, no insertion
   if (!$insert) {
     /* ------------- update the orders which has been modified in 60 days database order_back_market ------------- */
@@ -144,8 +154,8 @@ function updateOrderInDB($order, $insert = false) {
   } else { // if needs insertion
     /* ------------- insert all the data into the database order_back_market ------------- */
     $insertSQL = "INSERT INTO ".TABLE_BACK_MARKET_ORDER.
-                  " (`no`, `BMOrderId`, `State`, `DateCreation`, `DateModification`, `DateShipping`, `DatePayment`, `OrderPrice`, `ShippingPrice`, `Currency`, `ShipAddrCompany`, `ShipAddrFirstN`, `ShipAddrLastN`, `ShipAddrGender`, `ShipAddrSt`, `ShipAddrSt2`, `ShipAddrPostal`, `ShipAddrCity`, `ShipAddrState`, `ShipAddrCountry`, `ShipAddrPhone`, `ShipAddrEmail`, `BillAddrCompany`, `BillAddrFirstN`, `BillAddrLastN`, `BillAddrGender`, `BillAddrSt`, `BillAddrSt2`, `BillAddrPostal`, `BillAddrCity`, `BillAddrState`, `BillAddrCountry`, `BillAddrPhone`, `BillAddrEmail`, `DeliveryNote`, `TrackingNum`, `TrackingUrl`, `Shipper`, `CountryCode`, `PaypalRef`, `InstallPayment`, `PaymentMethod`, `SaleTaxes`)
-                  VALUES (null, '$order->order_id', '$order->state', '$dateCreation', '$dateModification', '$dateShipping', '$datePayment', '$order->price', '$order->shipping_price', '$order->currency', '$shipCompany', '$shipFirstName', '$shipLastName', '$shipGender', '$shipSt', '$shipSt2', '$shipPostal', '$shipCity', '$shipState', '$shipCountry', '$shipPhone', '$shipEmail', '$billCompany', '$billFirstName', '$billLastName', '$billGender', '$billSt', '$billSt2', '$billPostal', '$billCity', '$billState', '$billCountry', '$billPhone', '$billEmail', '$order->delivery_note', '$order->tracking_num', '$order->tracking_url', '$order->shipper', '$order->country_code', '$order->paypal_reference', '$installPay', '$order->payment_method', '$order->sales_taxes')";
+                  " (`no`, `BMOrderId`, `State`, `Title`, `DateCreation`, `DateModification`, `DateShipping`, `DatePayment`, `OrderPrice`, `ShippingPrice`, `Currency`, `ShipAddrCompany`, `ShipAddrFirstN`, `ShipAddrLastN`, `ShipAddrGender`, `ShipAddrSt`, `ShipAddrSt2`, `ShipAddrPostal`, `ShipAddrCity`, `ShipAddrState`, `ShipAddrCountry`, `ShipAddrPhone`, `ShipAddrEmail`, `BillAddrCompany`, `BillAddrFirstN`, `BillAddrLastN`, `BillAddrGender`, `BillAddrSt`, `BillAddrSt2`, `BillAddrPostal`, `BillAddrCity`, `BillAddrState`, `BillAddrCountry`, `BillAddrPhone`, `BillAddrEmail`, `DeliveryNote`, `TrackingNum`, `TrackingUrl`, `Shipper`, `CountryCode`, `PaypalRef`, `InstallPayment`, `PaymentMethod`, `SaleTaxes`, `IsUpgrade`)
+                  VALUES (null, '$order->order_id', '$order->state', '$title', '$dateCreation', '$dateModification', '$dateShipping', '$datePayment', '$order->price', '$order->shipping_price', '$order->currency', '$shipCompany', '$shipFirstName', '$shipLastName', '$shipGender', '$shipSt', '$shipSt2', '$shipPostal', '$shipCity', '$shipState', '$shipCountry', '$shipPhone', '$shipEmail', '$billCompany', '$billFirstName', '$billLastName', '$billGender', '$billSt', '$billSt2', '$billPostal', '$billCity', '$billState', '$billCountry', '$billPhone', '$billEmail', '$order->delivery_note', '$order->tracking_num', '$order->tracking_url', '$order->shipper', '$order->country_code', '$order->paypal_reference', '$installPay', '$order->payment_method', '$order->sales_taxes', '0')";
     echo $insertSQL."\n";
     mysql_query($insertSQL) or die('Cannot execute query! Error: '.mysql_error());
   }
