@@ -4,8 +4,8 @@ include_once ('../backmarket_api/BackMarketAPI.php');
 include_once ('../config/database_tables.php');
 include_once ('../config/conn.php');
 
-// getBMOrdersNew();
-// sleep(10);
+getBMOrdersNew();
+sleep(10);
 updateBMOrdersAll();
 
 /**
@@ -146,19 +146,25 @@ function updateOrderInDB($order, $insert = false) {
   /* ------------- map the exact status of an order accoring to states of order and its orderlines ------------- */
   $status = mapStateToStatus($order);
 
+  /* ------------- Get the sum of orderlines quantities of an exact order ------------- */
+  $qty = orderQuantity($order);
+
+  /* ------------- Get the sum of orderlines quantities of an exact order ------------- */
+  $delay = shipByCalculate($order);
+
   // if only need update, no insertion
   if (!$insert) {
     /* ------------- update the orders which has been modified in 60 days database order_back_market ------------- */
     $updateSQL = "UPDATE ".TABLE_BACK_MARKET_ORDER.
-                  " SET Status='$status', State='$order->state', DateCreation='$dateCreation', DateModification='$dateModification', DateShipping='$dateShipping', DatePayment='$datePayment', OrderPrice='$order->price', ShippingPrice='$order->shipping_price', Currency='$order->currency', ShipAddrCompany='$shipCompany', ShipAddrFirstN='$shipFirstName', ShipAddrLastN='$shipLastName', ShipAddrGender='$shipGender', ShipAddrSt='$shipSt', ShipAddrSt2='$shipSt2', ShipAddrPostal='$shipPostal', ShipAddrCity='$shipCity', ShipAddrState='$shipState', ShipAddrCountry='$shipCountry', ShipAddrPhone='$shipPhone', ShipAddrEmail='$shipEmail', BillAddrCompany='$billCompany', BillAddrFirstN='$billFirstName', BillAddrLastN='$billLastName', BillAddrGender='$billGender', BillAddrSt='$billSt', BillAddrSt2='$billSt2', BillAddrPostal='$billPostal', BillAddrCity='$billCity', BillAddrState='$billState', BillAddrCountry='$billCountry', BillAddrPhone='$billPhone', BillAddrEmail='$billEmail', DeliveryNote='$order->delivery_note', TrackingNum='$order->tracking_num', TrackingUrl='$order->tracking_url', Shipper='$order->shipper', CountryCode='$order->country_code', PaypalRef='$order->paypal_reference', InstallPayment='$installPay', PaymentMethod='$order->payment_method', SaleTaxes='$order->sales_taxes', IsUpgrade='false' 
+                  " SET Status='$status', State='$order->state', Title='$title', Quantity='$qty', DateCreation='$dateCreation', DateModification='$dateModification', DateShipping='$dateShipping', DatePayment='$datePayment', ShipBy=DATE_ADD('$dateCreation', INTERVAL $delay HOUR), OrderPrice='$order->price', ShippingPrice='$order->shipping_price', Currency='$order->currency', ShipAddrCompany='$shipCompany', ShipAddrFirstN='$shipFirstName', ShipAddrLastN='$shipLastName', ShipAddrGender='$shipGender', ShipAddrSt='$shipSt', ShipAddrSt2='$shipSt2', ShipAddrPostal='$shipPostal', ShipAddrCity='$shipCity', ShipAddrState='$shipState', ShipAddrCountry='$shipCountry', ShipAddrPhone='$shipPhone', ShipAddrEmail='$shipEmail', BillAddrCompany='$billCompany', BillAddrFirstN='$billFirstName', BillAddrLastN='$billLastName', BillAddrGender='$billGender', BillAddrSt='$billSt', BillAddrSt2='$billSt2', BillAddrPostal='$billPostal', BillAddrCity='$billCity', BillAddrState='$billState', BillAddrCountry='$billCountry', BillAddrPhone='$billPhone', BillAddrEmail='$billEmail', DeliveryNote='$order->delivery_note', TrackingNum='$order->tracking_num', TrackingUrl='$order->tracking_url', Shipper='$order->shipper', CountryCode='$order->country_code', PaypalRef='$order->paypal_reference', InstallPayment='$installPay', PaymentMethod='$order->payment_method', SaleTaxes='$order->sales_taxes', IsUpgrade='false' 
                   WHERE BMOrderId='$order->order_id'";
     echo $updateSQL;
     mysql_query($updateSQL) or die('Cannot execute query! Error: '.mysql_error());
   } else { // if needs insertion
     /* ------------- insert all the data into the database order_back_market ------------- */
     $insertSQL = "INSERT INTO ".TABLE_BACK_MARKET_ORDER.
-                  " (`no`, `BMOrderId`, `Status`, `State`, `Title`, `DateCreation`, `DateModification`, `DateShipping`, `DatePayment`, `OrderPrice`, `ShippingPrice`, `Currency`, `ShipAddrCompany`, `ShipAddrFirstN`, `ShipAddrLastN`, `ShipAddrGender`, `ShipAddrSt`, `ShipAddrSt2`, `ShipAddrPostal`, `ShipAddrCity`, `ShipAddrState`, `ShipAddrCountry`, `ShipAddrPhone`, `ShipAddrEmail`, `BillAddrCompany`, `BillAddrFirstN`, `BillAddrLastN`, `BillAddrGender`, `BillAddrSt`, `BillAddrSt2`, `BillAddrPostal`, `BillAddrCity`, `BillAddrState`, `BillAddrCountry`, `BillAddrPhone`, `BillAddrEmail`, `DeliveryNote`, `TrackingNum`, `TrackingUrl`, `Shipper`, `CountryCode`, `PaypalRef`, `InstallPayment`, `PaymentMethod`, `SaleTaxes`, `IsUpgrade`)
-                  VALUES (null, '$order->order_id', '$status', '$order->state', '$title', '$dateCreation', '$dateModification', '$dateShipping', '$datePayment', '$order->price', '$order->shipping_price', '$order->currency', '$shipCompany', '$shipFirstName', '$shipLastName', '$shipGender', '$shipSt', '$shipSt2', '$shipPostal', '$shipCity', '$shipState', '$shipCountry', '$shipPhone', '$shipEmail', '$billCompany', '$billFirstName', '$billLastName', '$billGender', '$billSt', '$billSt2', '$billPostal', '$billCity', '$billState', '$billCountry', '$billPhone', '$billEmail', '$order->delivery_note', '$order->tracking_num', '$order->tracking_url', '$order->shipper', '$order->country_code', '$order->paypal_reference', '$installPay', '$order->payment_method', '$order->sales_taxes', 'false')";
+                  " (`no`, `BMOrderId`, `Status`, `State`, `Title`, `Quantity`, `DateCreation`, `DateModification`, `DateShipping`, `DatePayment`, `ShipBy`, `OrderPrice`, `ShippingPrice`, `Currency`, `ShipAddrCompany`, `ShipAddrFirstN`, `ShipAddrLastN`, `ShipAddrGender`, `ShipAddrSt`, `ShipAddrSt2`, `ShipAddrPostal`, `ShipAddrCity`, `ShipAddrState`, `ShipAddrCountry`, `ShipAddrPhone`, `ShipAddrEmail`, `BillAddrCompany`, `BillAddrFirstN`, `BillAddrLastN`, `BillAddrGender`, `BillAddrSt`, `BillAddrSt2`, `BillAddrPostal`, `BillAddrCity`, `BillAddrState`, `BillAddrCountry`, `BillAddrPhone`, `BillAddrEmail`, `DeliveryNote`, `TrackingNum`, `TrackingUrl`, `Shipper`, `CountryCode`, `PaypalRef`, `InstallPayment`, `PaymentMethod`, `SaleTaxes`, `IsUpgrade`)
+                  VALUES (null, '$order->order_id', '$status', '$order->state', '$title', '$qty', '$dateCreation', '$dateModification', '$dateShipping', '$datePayment', DATE_ADD('$dateCreation', INTERVAL $delay HOUR), '$order->price', '$order->shipping_price', '$order->currency', '$shipCompany', '$shipFirstName', '$shipLastName', '$shipGender', '$shipSt', '$shipSt2', '$shipPostal', '$shipCity', '$shipState', '$shipCountry', '$shipPhone', '$shipEmail', '$billCompany', '$billFirstName', '$billLastName', '$billGender', '$billSt', '$billSt2', '$billPostal', '$billCity', '$billState', '$billCountry', '$billPhone', '$billEmail', '$order->delivery_note', '$order->tracking_num', '$order->tracking_url', '$order->shipper', '$order->country_code', '$order->paypal_reference', '$installPay', '$order->payment_method', '$order->sales_taxes', 'false')";
     echo $insertSQL."\n";
     mysql_query($insertSQL) or die('Cannot execute query! Error: '.mysql_error());
   }
@@ -191,15 +197,15 @@ function updateItemInDB($item, $order_id, $insert = false) {
   if (!$insert) {
     /* ------------- update the items which has been modified in 60 days database order_items_back_market ------------- */
     $updateSQL = "UPDATE ".TABLE_BACK_MARKET_ORDER_ITEMS.
-                  " SET BMOrderId='$order_id', OrderItemId='$item->product_id', State='$item->state', DateCreation='$dateCreation', ListingPrice='$item->price', ShippingPrice='$item->shipping_price', Currency='$item->currency', ListingSKU='$item->listing', ProductTitle='$item->product', Quantity='$item->quantity', IMEINum='$IMEI', Brand='$item->brand', Backcare='$Backcare', BackcarePrice='$item->backcare_price', ReturnReason='$item->return_reason', ReturnMessage='$item->return_message'
+                  " SET BMOrderId='$order_id', OrderItemId='$item->product_id', State='$item->state', ShipDelay='$item->shipping_delay', DateCreation='$dateCreation', ListingPrice='$item->price', ShippingPrice='$item->shipping_price', Currency='$item->currency', ListingSKU='$item->listing', ProductTitle='$item->product', Quantity='$item->quantity', IMEINum='$IMEI', Brand='$item->brand', Backcare='$Backcare', BackcarePrice='$item->backcare_price', ReturnReason='$item->return_reason', ReturnMessage='$item->return_message'
                   WHERE OrderlineId='$item->id'";
     echo $updateSQL;
     mysql_query($updateSQL) or die('Cannot execute query! Error: '.mysql_error());
   } else { // if needs insertion
     /* ------------- first time to insert all the data into the database order_items_back_market ------------- */
     $insertSQL = "INSERT INTO ".TABLE_BACK_MARKET_ORDER_ITEMS.
-                  " (`no`, `BMOrderId`, `OrderlineId`, `OrderItemId`, `State`, `DateCreation`, `ListingPrice`, `ShippingPrice`, `Currency`, `ListingSKU`, `ProductTitle`, `Quantity`, `IMEINum`, `Brand`, `Backcare`, `BackcarePrice`, `ReturnReason`, `ReturnMessage`)
-                  VALUES (null, '$order_id', '$item->id', '$item->product_id', '$item->state', '$dateCreation', '$item->price', '$item->shipping_price', '$item->currency', '$item->listing', '$item->product', '$item->quantity', '$IMEI', '$item->brand', '$Backcare', '$item->backcare_price', '$item->return_reason', '$item->return_message')";
+                  " (`no`, `BMOrderId`, `OrderlineId`, `OrderItemId`, `State`, `ShipDelay`, `DateCreation`, `ListingPrice`, `ShippingPrice`, `Currency`, `ListingSKU`, `ProductTitle`, `Quantity`, `IMEINum`, `Brand`, `Backcare`, `BackcarePrice`, `ReturnReason`, `ReturnMessage`)
+                  VALUES (null, '$order_id', '$item->id', '$item->product_id', '$item->state', '$item->shipping_delay', '$dateCreation', '$item->price', '$item->shipping_price', '$item->currency', '$item->listing', '$item->product', '$item->quantity', '$IMEI', '$item->brand', '$Backcare', '$item->backcare_price', '$item->return_reason', '$item->return_message')";
     echo $insertSQL;
     mysql_query($insertSQL) or die('Cannot execute query! Error: '.mysql_error());
   }
@@ -247,5 +253,39 @@ function mapStateToStatus($order) {
       if ($orderlines[$key]->state == 3) return 'Shipped';
     }
   }
+}
+
+/**
+ * METHOD orderQuantity
+ * Get the sum of orderlines quantities of an exact order
+ * @param object $order - the order object containing all the information inside of this order.
+ * @return int - the total quantities of an exact order
+ * @author Guozhi Tang
+ * @since 2020-03-06
+ */
+function orderQuantity($order) {
+  $orderlines = $order->orderlines;
+
+  foreach($orderlines as $key => $value) {
+    $sum += $orderlines[$key]->quantity;
+  }
+  return $sum;
+}
+
+/**
+ * METHOD shipByCalculate
+ * Get the Ship By date according to the Creation Date
+ * @param object $order - the order object containing all the information inside of this order.
+ * @return datetime - the exact Ship By date according to the Creation Date
+ * @author Guozhi Tang
+ * @since 2020-03-06
+ */
+function shipByCalculate($order) {
+  $orderlines = $order->orderlines;
+  $delay = $orderlines[0]->shipping_delay;
+  for ($i = 1; $i < count($orderlines); $i++) {
+    if ($orderlines[$i]->shipping_delay < $orderlines[$i-1]) $delay = $orderlines[$i]->shipping_delay;
+  }
+  return $delay;
 }
 ?>

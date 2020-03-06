@@ -148,15 +148,15 @@ class BackMarketAPI {
     // if there is no date_creation, default could be one day.
     // if (!$date_creation) {
     //   $date_creation = date("Y-m-d+H:i:s", time() - 60 * 24 * 60 * 60);
-      $end_point .= "?date_creation=$date_creation";
+      // $end_point .= "?date_creation=$date_creation";
     // }
 
     if (!$date_modification) {
       // comment this line if it is needed to get all the orders without time limitation
-      // $date_modification = date("Y-m-d+H:i:s", time() - 60 * 24 * 60 * 60);
+      $date_modification = date("Y-m-d+H:i:s", time() - 60 * 24 * 60 * 60);
     }
     
-    // $end_point .= "?date_modification=$date_modification";
+    $end_point .= "?date_modification=$date_modification";
 
     if(count($param) > 0) {
       $end_point .= '&'.http_build_query($param);
