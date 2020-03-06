@@ -4,9 +4,9 @@ include_once ('../backmarket_api/BackMarketAPI.php');
 include_once ('../config/database_tables.php');
 include_once ('../config/conn.php');
 
-getBMOrdersNew();
+// getBMOrdersNew();
 // sleep(10);
-// updateBMOrdersAll();
+updateBMOrdersAll();
 
 /**
  * METHOD getBMOrdersNew
@@ -143,19 +143,22 @@ function updateOrderInDB($order, $insert = false) {
     else $title = ($item_array[$i-1]->product); 
   } 
 
+  /* ------------- map the exact status of an order accoring to states of order and its orderlines ------------- */
+  $status = mapStateToStatus($order);
+
   // if only need update, no insertion
   if (!$insert) {
     /* ------------- update the orders which has been modified in 60 days database order_back_market ------------- */
     $updateSQL = "UPDATE ".TABLE_BACK_MARKET_ORDER.
-                  " SET State='$order->state', DateCreation='$dateCreation', DateModification='$dateModification', DateShipping='$dateShipping', DatePayment='$datePayment', OrderPrice='$order->price', ShippingPrice='$order->shipping_price', Currency='$order->currency', ShipAddrCompany='$shipCompany', ShipAddrFirstN='$shipFirstName', ShipAddrLastN='$shipLastName', ShipAddrGender='$shipGender', ShipAddrSt='$shipSt', ShipAddrSt2='$shipSt2', ShipAddrPostal='$shipPostal', ShipAddrCity='$shipCity', ShipAddrState='$shipState', ShipAddrCountry='$shipCountry', ShipAddrPhone='$shipPhone', ShipAddrEmail='$shipEmail', BillAddrCompany='$billCompany', BillAddrFirstN='$billFirstName', BillAddrLastN='$billLastName', BillAddrGender='$billGender', BillAddrSt='$billSt', BillAddrSt2='$billSt2', BillAddrPostal='$billPostal', BillAddrCity='$billCity', BillAddrState='$billState', BillAddrCountry='$billCountry', BillAddrPhone='$billPhone', BillAddrEmail='$billEmail', DeliveryNote='$order->delivery_note', TrackingNum='$order->tracking_num', TrackingUrl='$order->tracking_url', Shipper='$order->shipper', CountryCode='$order->country_code', PaypalRef='$order->paypal_reference', InstallPayment='$installPay', PaymentMethod='$order->payment_method', SaleTaxes='$order->sales_taxes' 
+                  " SET Status='$status', State='$order->state', DateCreation='$dateCreation', DateModification='$dateModification', DateShipping='$dateShipping', DatePayment='$datePayment', OrderPrice='$order->price', ShippingPrice='$order->shipping_price', Currency='$order->currency', ShipAddrCompany='$shipCompany', ShipAddrFirstN='$shipFirstName', ShipAddrLastN='$shipLastName', ShipAddrGender='$shipGender', ShipAddrSt='$shipSt', ShipAddrSt2='$shipSt2', ShipAddrPostal='$shipPostal', ShipAddrCity='$shipCity', ShipAddrState='$shipState', ShipAddrCountry='$shipCountry', ShipAddrPhone='$shipPhone', ShipAddrEmail='$shipEmail', BillAddrCompany='$billCompany', BillAddrFirstN='$billFirstName', BillAddrLastN='$billLastName', BillAddrGender='$billGender', BillAddrSt='$billSt', BillAddrSt2='$billSt2', BillAddrPostal='$billPostal', BillAddrCity='$billCity', BillAddrState='$billState', BillAddrCountry='$billCountry', BillAddrPhone='$billPhone', BillAddrEmail='$billEmail', DeliveryNote='$order->delivery_note', TrackingNum='$order->tracking_num', TrackingUrl='$order->tracking_url', Shipper='$order->shipper', CountryCode='$order->country_code', PaypalRef='$order->paypal_reference', InstallPayment='$installPay', PaymentMethod='$order->payment_method', SaleTaxes='$order->sales_taxes', IsUpgrade='false' 
                   WHERE BMOrderId='$order->order_id'";
     echo $updateSQL;
     mysql_query($updateSQL) or die('Cannot execute query! Error: '.mysql_error());
   } else { // if needs insertion
     /* ------------- insert all the data into the database order_back_market ------------- */
     $insertSQL = "INSERT INTO ".TABLE_BACK_MARKET_ORDER.
-                  " (`no`, `BMOrderId`, `State`, `Title`, `DateCreation`, `DateModification`, `DateShipping`, `DatePayment`, `OrderPrice`, `ShippingPrice`, `Currency`, `ShipAddrCompany`, `ShipAddrFirstN`, `ShipAddrLastN`, `ShipAddrGender`, `ShipAddrSt`, `ShipAddrSt2`, `ShipAddrPostal`, `ShipAddrCity`, `ShipAddrState`, `ShipAddrCountry`, `ShipAddrPhone`, `ShipAddrEmail`, `BillAddrCompany`, `BillAddrFirstN`, `BillAddrLastN`, `BillAddrGender`, `BillAddrSt`, `BillAddrSt2`, `BillAddrPostal`, `BillAddrCity`, `BillAddrState`, `BillAddrCountry`, `BillAddrPhone`, `BillAddrEmail`, `DeliveryNote`, `TrackingNum`, `TrackingUrl`, `Shipper`, `CountryCode`, `PaypalRef`, `InstallPayment`, `PaymentMethod`, `SaleTaxes`, `IsUpgrade`)
-                  VALUES (null, '$order->order_id', '$order->state', '$title', '$dateCreation', '$dateModification', '$dateShipping', '$datePayment', '$order->price', '$order->shipping_price', '$order->currency', '$shipCompany', '$shipFirstName', '$shipLastName', '$shipGender', '$shipSt', '$shipSt2', '$shipPostal', '$shipCity', '$shipState', '$shipCountry', '$shipPhone', '$shipEmail', '$billCompany', '$billFirstName', '$billLastName', '$billGender', '$billSt', '$billSt2', '$billPostal', '$billCity', '$billState', '$billCountry', '$billPhone', '$billEmail', '$order->delivery_note', '$order->tracking_num', '$order->tracking_url', '$order->shipper', '$order->country_code', '$order->paypal_reference', '$installPay', '$order->payment_method', '$order->sales_taxes', '0')";
+                  " (`no`, `BMOrderId`, `Status`, `State`, `Title`, `DateCreation`, `DateModification`, `DateShipping`, `DatePayment`, `OrderPrice`, `ShippingPrice`, `Currency`, `ShipAddrCompany`, `ShipAddrFirstN`, `ShipAddrLastN`, `ShipAddrGender`, `ShipAddrSt`, `ShipAddrSt2`, `ShipAddrPostal`, `ShipAddrCity`, `ShipAddrState`, `ShipAddrCountry`, `ShipAddrPhone`, `ShipAddrEmail`, `BillAddrCompany`, `BillAddrFirstN`, `BillAddrLastN`, `BillAddrGender`, `BillAddrSt`, `BillAddrSt2`, `BillAddrPostal`, `BillAddrCity`, `BillAddrState`, `BillAddrCountry`, `BillAddrPhone`, `BillAddrEmail`, `DeliveryNote`, `TrackingNum`, `TrackingUrl`, `Shipper`, `CountryCode`, `PaypalRef`, `InstallPayment`, `PaymentMethod`, `SaleTaxes`, `IsUpgrade`)
+                  VALUES (null, '$order->order_id', '$status', '$order->state', '$title', '$dateCreation', '$dateModification', '$dateShipping', '$datePayment', '$order->price', '$order->shipping_price', '$order->currency', '$shipCompany', '$shipFirstName', '$shipLastName', '$shipGender', '$shipSt', '$shipSt2', '$shipPostal', '$shipCity', '$shipState', '$shipCountry', '$shipPhone', '$shipEmail', '$billCompany', '$billFirstName', '$billLastName', '$billGender', '$billSt', '$billSt2', '$billPostal', '$billCity', '$billState', '$billCountry', '$billPhone', '$billEmail', '$order->delivery_note', '$order->tracking_num', '$order->tracking_url', '$order->shipper', '$order->country_code', '$order->paypal_reference', '$installPay', '$order->payment_method', '$order->sales_taxes', 'false')";
     echo $insertSQL."\n";
     mysql_query($insertSQL) or die('Cannot execute query! Error: '.mysql_error());
   }
@@ -199,6 +202,50 @@ function updateItemInDB($item, $order_id, $insert = false) {
                   VALUES (null, '$order_id', '$item->id', '$item->product_id', '$item->state', '$dateCreation', '$item->price', '$item->shipping_price', '$item->currency', '$item->listing', '$item->product', '$item->quantity', '$IMEI', '$item->brand', '$Backcare', '$item->backcare_price', '$item->return_reason', '$item->return_message')";
     echo $insertSQL;
     mysql_query($insertSQL) or die('Cannot execute query! Error: '.mysql_error());
+  }
+}
+
+/**
+ * METHOD mapStateToStatus
+ * Map the exact status of the order according to specific order and its orderlines
+ * @param object $order - the order object containing all the information inside of this order.
+ * @return String - the exact status of an order in String type
+ * @author Guozhi Tang
+ * @since 2020-03-05
+ */
+function mapStateToStatus($order) {
+  $orderlines = $order->orderlines;
+
+  // if the state of order or is 0 or 1, then the order status is 'Created'
+  if ($order->state == 0 || $order->state == 1) return 'Created';
+
+  if ($order->state == 3) {
+    foreach($orderlines as $key => $value) {
+      // in case there are some of the orderlines not being validated, then the status is still 'Created'
+      if ($orderlines[$key] == 0 || $orderlines[$key] == 1) return 'Created';
+      else continue;
+    }
+    // if all the states of orderlines are 2, the order status should be 'Validated'
+    return 'Validated';
+  }
+
+  if ($order->state == 8) return 'Cancelled';
+
+  if ($order->state == 9) {
+    // if any one of the states of orderlines is 6, the order status should be 'Returned'
+    foreach($orderlines as $key => $value) {
+      if ($orderlines[$key]->state == 6) return 'Returned';
+    }
+
+    // if any one of the states of orderlines is 4 or 5
+    foreach($orderlines as $key => $value) {
+      if ($orderlines[$key]->state == 4 || $orderlines[$key]->state == 5) return 'Cancelled';
+    }
+
+    // if any one of the states of orderlines is 3, the order status should be 'Shipped'
+    foreach($orderlines as $key => $value) {
+      if ($orderlines[$key]->state == 3) return 'Shipped';
+    }
   }
 }
 ?>
