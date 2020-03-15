@@ -1,8 +1,8 @@
 <?php
 
-include_once ('../backmarket_api/BackMarketAPI.php');
-include_once ('../config/database_tables.php');
-include_once ('../config/conn.php');
+include_once ('../includes/backmarket_api/BackMarketAPI.php');
+include_once ('../includes/database_tables.php');
+include_once ('../includes/conn.php');
 
 getBMOrdersNew();
 updateBMOrdersAll();
@@ -20,25 +20,39 @@ function getBMOrdersNew() {
   $res_array = $bm->getNewOrders();
   // $res_array = $bm->getAllOrders();
 
-  print_r($res_array);
+  // print_r($res_array);
 
-  // if there are some new orders
-  if ($res_array != null) {}
-  foreach ($res_array as $key1 => $value1) {
-    // get the object of each new order
-    $order_obj = $res_array[$key1];
-    // insert the data into database of each new order
-    updateOrderInDB($order_obj, true);
-    
-    // get the new orderlines array
-    $items_array = $order_obj->orderlines;
-    foreach ($items_array as $key2 => $value2) {
-      // get the object of each new orderline/item
-      $item_obj = $items_array[$key2];
-      // insert the data into database of each new item/orderline
-      updateItemInDB($item_obj, $order_obj->order_id, true);
+  // if there are new orders
+  if ($res_array != null) {
+    foreach ($res_array as $key1 => $value1) {
+      // get the object of each new order
+      $order_obj = $res_array[$key1];
+
+      // check whether this order exists in database
+      // if not, insert this new order, if exists, do nothing
+      if (checkExistance($order_obj->order_id, TABLE_BACKMARKET_ORDERS) == 0) {
+        // insert the data into database of each new order
+        updateOrderInDB($order_obj, true);
+      }
+
+      // get the new orderlines array
+      $items_array = $order_obj->orderlines;
+      foreach ($items_array as $key2 => $value2) {
+        // get the object of each new orderline/item
+        $item_obj = $items_array[$key2];
+
+        // check whether this orderline exists in database
+        // if not, insert this new orderline, if exists, do nothing
+        if (checkExistance($item_obj->id, TABLE_BACKMARKET_ORDER_ITEMS) == 0) {
+          // insert the data into database of each new item/orderline
+          updateItemInDB($item_obj, $order_obj->order_id, true);
+        }
+
+        // validate the state of new orderline
+        $bm->validateOrderlines($order_obj->order_id, $item_obj->listing);
+      }
     }
-  }
+  } else print_r('No new orders (in state 0 or 1) exists!'."\n\n");
 }
 
 /**
@@ -54,24 +68,40 @@ function updateBMOrdersAll() {
   $res_array = $bm->getAllOrders();
   // print_r($res_array);
 
-  foreach ($res_array as $key1 => $value1) {
-    // get the object of each order
-    $order_obj = $res_array[$key1];
-    // update the data in database of each order
-    updateOrderInDB($order_obj);
-    // print_r($order_obj->order_id."\n".$order_obj->orderlines."\n");
+  if ($res_array != null) {
+    foreach ($res_array as $key1 => $value1) {
+      // get the object of each order
+      $order_obj = $res_array[$key1];
 
-    // get the orderlines array
-    $items_array = $order_obj->orderlines;
-    foreach ($items_array as $key2 => $value2) {
-      // get the object of each orderline/item
-      $item_obj = $items_array[$key2];
-      // print_r($order_obj->order_id."\n");
-      // print_r($item_obj);
-      // update the data in database of each item/orderline
-      updateItemInDB($item_obj, $order_obj->order_id);
+      // check whether this order exists in database
+      // if not, insert this order, if exists, update the order
+      if (checkExistance($order_obj->order_id, TABLE_BACKMARKET_ORDERS) == 0) {
+        // insert the data into database of each new order
+        updateOrderInDB($order_obj, true);
+      } else {
+        // update the data in database of each order
+        updateOrderInDB($order_obj);
+      }
+
+      // get the orderlines array
+      $items_array = $order_obj->orderlines;
+      foreach ($items_array as $key2 => $value2) {
+        // get the object of each orderline/item
+        $item_obj = $items_array[$key2];
+        // print_r($item_obj);
+
+        // check whether this orderline exists in database
+        // if not, insert this orderline, if exists, update the orderline
+        if (checkExistance($item_obj->id, TABLE_BACKMARKET_ORDER_ITEMS) == 0) {
+          // insert the data into database of each new item/orderline
+          updateItemInDB($item_obj, $order_obj->order_id, true);
+        } else {
+          // update the data in database of each item/orderline
+          updateItemInDB($item_obj, $order_obj->order_id);
+        }
+      }
     }
-  }
+  } else print_r('No orders have been modified in 3 months!');
 }
 
 /**
@@ -154,14 +184,14 @@ function updateOrderInDB($order, $insert = false) {
   // if only need update, no insertion
   if (!$insert) {
     /* ------------- update the orders which has been modified in 60 days database order_back_market ------------- */
-    $updateSQL = "UPDATE ".TABLE_BACK_MARKET_ORDER.
+    $updateSQL = "UPDATE ".TABLE_BACKMARKET_ORDERS.
               " SET Status='$status', State='$order->state', Title='$title', Quantity='$qty', DateCreation='$dateCreation', DateModification='$dateModification', DateShipping='$dateShipping', DatePayment='$datePayment', ShipBy=DATE_ADD('$dateCreation', INTERVAL $delay HOUR), OrderPrice='$order->price', ShippingPrice='$order->shipping_price', Currency='$order->currency', ShipAddrCompany='$shipCompany', ShipAddrFirstN='$shipFirstName', ShipAddrLastN='$shipLastName', ShipAddrGender='$shipGender', ShipAddrSt='$shipSt', ShipAddrSt2='$shipSt2', ShipAddrPostal='$shipPostal', ShipAddrCity='$shipCity', ShipAddrState='$shipState', ShipAddrCountry='$shipCountry', ShipAddrPhone='$shipPhone', ShipAddrEmail='$shipEmail', BillAddrCompany='$billCompany', BillAddrFirstN='$billFirstName', BillAddrLastN='$billLastName', BillAddrGender='$billGender', BillAddrSt='$billSt', BillAddrSt2='$billSt2', BillAddrPostal='$billPostal', BillAddrCity='$billCity', BillAddrState='$billState', BillAddrCountry='$billCountry', BillAddrPhone='$billPhone', BillAddrEmail='$billEmail', DeliveryNote='$order->delivery_note', TrackingNum='$order->tracking_number', TrackingUrl='$order->tracking_url', Shipper='$order->shipper', CountryCode='$order->country_code', PaypalRef='$order->paypal_reference', InstallPayment='$installPay', PaymentMethod='$order->payment_method', SaleTaxes='$order->sales_taxes', IsUpgrade='false' 
               WHERE BMOrderId='$order->order_id'";
-    echo $updateSQL;
+    echo $updateSQL."\n";
     mysql_query($updateSQL) or die('Cannot execute query! Error: '.mysql_error());
   } else { // if needs insertion
     /* ------------- insert all the data into the database order_back_market ------------- */
-    $insertSQL = "INSERT INTO ".TABLE_BACK_MARKET_ORDER.
+    $insertSQL = "INSERT INTO ".TABLE_BACKMARKET_ORDERS.
               " (`no`, `BMOrderId`, `Status`, `State`, `Title`, `Quantity`, `DateCreation`, `DateModification`, `DateShipping`, `DatePayment`, `ShipBy`, `OrderPrice`, `ShippingPrice`, `Currency`, `ShipAddrCompany`, `ShipAddrFirstN`, `ShipAddrLastN`, `ShipAddrGender`, `ShipAddrSt`, `ShipAddrSt2`, `ShipAddrPostal`, `ShipAddrCity`, `ShipAddrState`, `ShipAddrCountry`, `ShipAddrPhone`, `ShipAddrEmail`, `BillAddrCompany`, `BillAddrFirstN`, `BillAddrLastN`, `BillAddrGender`, `BillAddrSt`, `BillAddrSt2`, `BillAddrPostal`, `BillAddrCity`, `BillAddrState`, `BillAddrCountry`, `BillAddrPhone`, `BillAddrEmail`, `DeliveryNote`, `TrackingNum`, `TrackingUrl`, `Shipper`, `CountryCode`, `PaypalRef`, `InstallPayment`, `PaymentMethod`, `SaleTaxes`, `IsUpgrade`)
               VALUES (null, '$order->order_id', '$status', '$order->state', '$title', '$qty', '$dateCreation', '$dateModification', '$dateShipping', '$datePayment', DATE_ADD('$dateCreation', INTERVAL $delay HOUR), '$order->price', '$order->shipping_price', '$order->currency', '$shipCompany', '$shipFirstName', '$shipLastName', '$shipGender', '$shipSt', '$shipSt2', '$shipPostal', '$shipCity', '$shipState', '$shipCountry', '$shipPhone', '$shipEmail', '$billCompany', '$billFirstName', '$billLastName', '$billGender', '$billSt', '$billSt2', '$billPostal', '$billCity', '$billState', '$billCountry', '$billPhone', '$billEmail', '$order->delivery_note', '$order->tracking_number', '$order->tracking_url', '$order->shipper', '$order->country_code', '$order->paypal_reference', '$installPay', '$order->payment_method', '$order->sales_taxes', 'false')";
     echo $insertSQL."\n";
@@ -195,17 +225,17 @@ function updateItemInDB($item, $order_id, $insert = false) {
   // if only need update, no insertion
   if (!$insert) {
     /* ------------- update the items which has been modified in 60 days database order_items_back_market ------------- */
-    $updateSQL = "UPDATE ".TABLE_BACK_MARKET_ORDER_ITEMS.
+    $updateSQL = "UPDATE ".TABLE_BACKMARKET_ORDER_ITEMS.
                   " SET BMOrderId='$order_id', OrderItemId='$item->product_id', State='$item->state', ShipDelay='$item->shipping_delay', DateCreation='$dateCreation', ListingPrice='$item->price', ShippingPrice='$item->shipping_price', Currency='$item->currency', ListingSKU='$item->listing', ProductTitle='$item->product', Quantity='$item->quantity', IMEINum='$IMEI', Brand='$item->brand', Backcare='$Backcare', BackcarePrice='$item->backcare_price', ReturnReason='$item->return_reason', ReturnMessage='$item->return_message'
                   WHERE OrderlineId='$item->id'";
-    echo $updateSQL;
+    echo $updateSQL."\n";
     mysql_query($updateSQL) or die('Cannot execute query! Error: '.mysql_error());
   } else { // if needs insertion
     /* ------------- first time to insert all the data into the database order_items_back_market ------------- */
-    $insertSQL = "INSERT INTO ".TABLE_BACK_MARKET_ORDER_ITEMS.
+    $insertSQL = "INSERT INTO ".TABLE_BACKMARKET_ORDER_ITEMS.
                   " (`no`, `BMOrderId`, `OrderlineId`, `OrderItemId`, `State`, `ShipDelay`, `DateCreation`, `ListingPrice`, `ShippingPrice`, `Currency`, `ListingSKU`, `ProductTitle`, `Quantity`, `IMEINum`, `Brand`, `Backcare`, `BackcarePrice`, `ReturnReason`, `ReturnMessage`)
                   VALUES (null, '$order_id', '$item->id', '$item->product_id', '$item->state', '$item->shipping_delay', '$dateCreation', '$item->price', '$item->shipping_price', '$item->currency', '$item->listing', '$item->product', '$item->quantity', '$IMEI', '$item->brand', '$Backcare', '$item->backcare_price', '$item->return_reason', '$item->return_message')";
-    echo $insertSQL;
+    echo $insertSQL."\n";
     mysql_query($insertSQL) or die('Cannot execute query! Error: '.mysql_error());
   }
 }
@@ -286,5 +316,31 @@ function shipByCalculate($order) {
     if ($orderlines[$i]->shipping_delay < $orderlines[$i-1]) $delay = $orderlines[$i]->shipping_delay;
   }
   return $delay;
+}
+
+/**
+ * METHOD checkExistance
+ * check whether the data with the exact parameter exists in the speicific table
+ * @param string $parameter - the exact parameter of the data, could be the unique id.
+ * @param string $table - the specific table which should be checked.
+ * @return int - 1 means the data exists already, 0 means the data does not exist in the table.
+ * @author Guozhi Tang
+ * @since 2020-03-13
+ */
+function checkExistance($parameter, $table) {
+  // check the data in orders table
+  if ($table == TABLE_BACKMARKET_ORDERS) {
+    $SQL = "SELECT * FROM ".TABLE_BACKMARKET_ORDERS." WHERE BMOrderId='$parameter' LIMIT 1";
+  } else {
+    // check the data in orderlines table
+    $SQL = "SELECT * FROM ".TABLE_BACKMARKET_ORDER_ITEMS." WHERE OrderlineId='$parameter' LIMIT 1";
+  }
+
+  $result = mysql_query($SQL) or die("Couldn't execute query.".mysql_error());
+  
+  if (mysql_num_rows($result)) $check = 1;
+  else $check = 0;
+
+  return $check;
 }
 ?>
