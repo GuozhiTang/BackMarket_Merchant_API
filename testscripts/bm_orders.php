@@ -1,8 +1,8 @@
 <?php
 
-include_once ('../includes/backmarket_api/BackMarketAPI.php');
-include_once ('../includes/database_tables.php');
-include_once ('../includes/conn.php');
+include_once ('../backmarket_api/BackMarketAPI.php');
+include_once ('../config/database_tables.php');
+include_once ('../config/conn.php');
 
 getBMOrdersNew();
 updateBMOrdersAll();
