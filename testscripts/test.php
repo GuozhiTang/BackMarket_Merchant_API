@@ -44,6 +44,19 @@ echo $bm->getOneOrder($order_id);
  */
 // echo $bm->getNewOrders();
 
+/**
+ * Test for validate and shipping functions with validateOrderlines() and shippingOrderlines()
+ */
 // $bm->validateOrderlines('324272', '889842392111_bkmt');
-$bm->shippingOrderlines(true, '324272', '1Z85329E4231218965', 'UPS');
+// $bm->shippingOrderlines(true, '324272', '1Z85329E4231218965', 'UPS');
+
+/**
+ * Get all listings through getAllListings() method
+ */
+// $bm->getAllListings();
+
+/**
+ * Get one listing with specific listing id through getOneListing() method
+ */
+$bm->getOneListing(241147);
 ?>

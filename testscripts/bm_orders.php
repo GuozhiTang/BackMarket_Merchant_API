@@ -257,7 +257,7 @@ function mapStateToStatus($order) {
   if ($order->state == 3) {
     foreach($orderlines as $key => $value) {
       // in case there are some of the orderlines not being validated, then the status is still 'Created'
-      if ($orderlines[$key] == 0 || $orderlines[$key] == 1) return 'Created';
+      if ($orderlines[$key]->state == 0 || $orderlines[$key]->state == 1) return 'Created';
       else continue;
     }
     // if all the states of orderlines are 2, the order status should be 'Validated'

@@ -444,5 +444,72 @@ class BackMarketAPI {
 
     return $result;
   }
+
+  /**
+   * METHOD getAllListings
+   * Get data of all listings based on exact date and limitations.
+   * @param string $publication_state - express the condition of the product
+   * @param array $param - contain all of other filter parameters
+   * @return array - the listings information in an array
+   * @link GET https://www.backmarket.com/ws/$end_point
+   * @author Guozhi Tang
+   * @since 2020-03-15
+   */
+  function getAllListings ($publication_state = null, $param = array()) {
+    $end_point = 'listings';
+  
+    $end_point .= "?publication_state=$publication_state";
+  
+    if (count($param) > 0) {
+      $end_point .= '&'.http_build_query($param);
+    }
+  
+    // result of the first page
+    $result = $this->apiGet($end_point);
+    // print_r($result);
+
+    // array results of the first page
+    $result_array = $result->results;
+
+    $result_next = $result;
+
+    $page = 1;
+    // judge whetehr there exists the next page
+    while (($result_next->next) != null) {
+      $page++;
+      // get the new end point
+      $end_point_next_tail = '&page='."$page";
+      $end_point_next = $end_point.$end_point_next_tail;
+      // print_r($end_point_next);
+      // the new page object
+      $result_next = $this->apiGet($end_point_next);
+      // the new page array
+      $result_next_array = $result_next->results;
+      // add all listings in current page to the $result_array
+      foreach ($result_next_array as $key => $value) {
+        array_push($result_array, $result_next_array[$key]);
+      }
+    }
+    print_r($result_array);
+
+    return $result_array;
+  }
+
+  /**
+   * METHOD getOneListing
+   * Get one listing's data according to a specific $listing_id
+   * @param string $listing_id - specific listing id
+   * @return object - a listing information as an object
+   * @link GET https://www.backmarket.com/ws/$end_point
+   * @author Guozhi Tang
+   * @since 2020-03-16
+   */
+  function getOneListing($listing_id) {
+    $end_point = 'listings/'.$listing_id;
+    $result = $this->apiGet($end_point);
+    print_r($result);
+
+    return $result;
+  }
 }
 ?>
