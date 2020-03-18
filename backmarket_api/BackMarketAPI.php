@@ -511,5 +511,71 @@ class BackMarketAPI {
 
     return $result;
   }
+
+  /**
+   * METHOD updateOneListing
+   * update the parameter of a specific listing in real time
+   * @param String $listing_id - the listing id of a specific listing
+   * @return Object $response - return the JSON object of the HTTP response
+   * @link POST https://www.backmarket.com/ws/$end_point
+   * @author Guozhi Tang
+   * @since 2020-03-18
+   */
+  function updateOneListing($listing_id, $request_JSON) {
+    $end_point = 'listings/'.$listing_id;
+
+    $response = $this->apiPost($end_point, $request_JSON);
+    // print_r($response);
+
+    return $response;
+  }
+
+  /**
+   * METHOD updateSeveralListings
+   * update several listings in around 5 mins with parameters in a .csv file
+   * @param file $csvFile - the file in .csv type containing all the updated information
+   * @return Object $response - return the JSON object of the HTTP response
+   * @author Guozhi Tang
+   * @since 2020-03-18
+   */
+  function updateSeveralListings($csvFile) {
+    $end_point = 'listings';
+
+    $csv = $this->readCSV($csvFile);
+    // print_r($csv);
+    $request = array ('encoding' => 'latin1', 'delimiter' => ";", 'quotechar' => "\n", 'header' => true, 'catalog' => "$csv");
+    $request_JSON = json_encode($request);
+    // print_r($request_JSON);
+
+    $response = $this->apiPost($end_point, $request_JSON);
+    print_r($response);
+
+    return $response;
+  }
+
+  /**
+   * METHOD function
+   * read the .csv file and return the content in string type
+   * @param file $file - the .csv file containing the parameters needed to be updated for several listings
+   * @return String $data - the content in the .csv file in String type
+   * @author Guozhi Tang
+   * @since 2020-03-18
+   */
+  function readCSV($file) {
+    $data = null;
+
+    if (!is_file($file) && !file_exists($file)) {
+      die('File Error!');
+    }
+    $csv_file = fopen($file, 'r');
+    while ($file_data = fgetcsv($csv_file)) {
+      if ($file_data[0] != '') {
+        $data .= $file_data[0]."\n";
+      }
+    }
+
+    fclose($csv_file);
+    return $data;
+  }
 }
 ?>

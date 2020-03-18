@@ -6,6 +6,11 @@ include_once ('../config/conn.php');
 
 updateBMListingsAll();
 
+// editOneBMListing();
+
+// $bm = new BackMarketAPI();
+// $bm->updateSeveralListings('../includes/backmarket_api/test.csv');
+
 /**
  * METHOD updateBMListingsAll
  * update data in database of all the listings
@@ -38,6 +43,26 @@ function updateBMListingsAll() {
       updateListingsInDB($listing_obj);
     }
   } else print_r("No listings existed currently!");
+}
+
+/**
+ * METHOD editOneBMListing
+ * update the parameter of a specific listing in real time
+ * @param String $listing_id - the listing id of a specific listing
+ * @param Array $request_array - an array conataining all the information which need to be updated
+ * @return void
+ * @author Guozhi Tang
+ * @since 2020-03-18
+ */
+function editOneBMListing($listing_id, $request_array) {
+  $bm = new BackMarketAPI();
+
+  // $request = array ('quantity' => 93, 'price' => 39.99);
+  $request_JSON = json_encode($request_array);
+  // $listing_id = 159533;
+
+  $response = $bm->updateOneListing($listing_id, $request_JSON);
+  print_r($response);
 }
 
 /**
@@ -100,10 +125,22 @@ function updateListingsInDB($listing) {
     break;
   }
 
+  /* ------------- map the tinyint value of boolean type Snowden and TvaPro ------------- */
+  if ($listing->snowden == false) {
+    $snowden = 0;
+  } else {
+    $snowden = 1;
+  }
+  if ($listing->tva_pro == false) {
+    $tva_pro = 0;
+  } else {
+    $tva_pro = 1;
+  }
+
   /* ------------- insert all the data into the database store_inv_back_market ------------- */
   $insertSQL = "INSERT INTO ".TABLE_STORE_INV_BACKMARKET.
-                " (`no`, `ListingId`, `SKU`, `Title`, `Deee`, `ConditionState`, `State`, `Price`, `PricePromo`, `Quantity`, `Status`, `PublicationState`, `Comment`, `WarrantlyDelay`, `Currency`, `BackMarketId`, `ShippingPrice`, `ShippingDelay`, `Shipper`, `ShipperDisplay`, `CountryCode`)
-                VALUES (null, '$listing->listing_id', '$listing->sku', '$title', '$listing->deee', '$condition_state', '$listing->state', '$listing->price', '$listing->price_promo', '$listing->quantity', '$status', '$listing->publication_state', '$listing->comment', '$listing->warranty_delay', '$listing->currency', '$listing->backmarket_id', '$shipping_price', '$shipping_delay', '$shipper', '$shipper_display', '$country_code');";
+                " (`no`, `ListingId`, `SKU`, `Title`, `Deee`, `ConditionState`, `State`, `Price`, `PricePromo`, `Quantity`, `Status`, `PublicationState`, `Comment`, `WarrantlyDelay`, `Currency`, `BackMarketId`, `ShippingPrice`, `ShippingDelay`, `Shipper`, `ShipperDisplay`, `CountryCode`, `Snowden`, `TvaPro`)
+                VALUES (null, '$listing->listing_id', '$listing->sku', '$title', '$listing->deee', '$condition_state', '$listing->state', '$listing->price', '$listing->price_promo', '$listing->quantity', '$status', '$listing->publication_state', '$listing->comment', '$listing->warranty_delay', '$listing->currency', '$listing->backmarket_id', '$shipping_price', '$shipping_delay', '$shipper', '$shipper_display', '$country_code', '$snowden', '$tva_pro');";
   echo $insertSQL."\n";
   mysql_query($insertSQL) or die('Cannot execute query! Error: '.mysql_error());
 }
